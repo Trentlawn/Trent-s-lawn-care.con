@@ -1,0 +1,132 @@
+name: Apply Trent branding update
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - .github/workflows/apply-trent-branding.yml
+
+permissions:
+  contents: write
+
+jobs:
+  apply-branding:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out website
+        uses: actions/checkout@v4
+
+      - name: Add branded background and business-card header
+        shell: bash
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+
+          path = Path("index.html")
+          html = path.read_text(encoding="utf-8")
+          marker = "/* TRENT-BRAND-BACKGROUND-2026-07-25 */"
+
+          if marker not in html:
+              css = r'''
+
+          /* TRENT-BRAND-BACKGROUND-2026-07-25 */
+          body::after{
+            display:flex!important;
+            content:"TRENT'S\A LAWN CARE";
+            white-space:pre;
+            position:fixed;
+            inset:0;
+            align-items:flex-end;
+            justify-content:flex-end;
+            padding:clamp(24px,5vw,72px);
+            box-sizing:border-box;
+            z-index:0;
+            pointer-events:none;
+            font-family:Inter,Arial,sans-serif;
+            font-size:clamp(3.2rem,10vw,9.5rem);
+            font-weight:1000;
+            line-height:.79;
+            letter-spacing:-.065em;
+            text-align:right;
+            color:rgba(218,255,99,.10);
+            text-shadow:0 8px 34px rgba(0,0,0,.30);
+          }
+          body>.topbar,body>header,body>main,body>footer,body>.mobile-cta,body>.toast{
+            position:relative;
+            z-index:1;
+          }
+          header .brand{
+            background:linear-gradient(145deg,rgba(255,253,245,.99),rgba(235,244,224,.99))!important;
+            border:2px solid rgba(201,239,87,.94)!important;
+            border-radius:18px!important;
+            padding:7px 13px 7px 8px!important;
+            gap:10px!important;
+            box-shadow:0 10px 28px rgba(0,0,0,.30)!important;
+          }
+          header .logo-image{
+            width:66px!important;
+            height:66px!important;
+            padding:3px!important;
+            border-radius:14px!important;
+            background:#fff!important;
+            border:1px solid rgba(7,45,27,.18)!important;
+            box-shadow:0 5px 15px rgba(7,27,15,.18)!important;
+          }
+          header .logo-image::before{display:none!important}
+          header .logo-image img{
+            width:100%!important;
+            height:100%!important;
+            object-fit:contain!important;
+            border-radius:11px!important;
+          }
+          header .brand strong{
+            color:#062d1b!important;
+            text-shadow:none!important;
+          }
+          header .brand span{
+            color:#3d5b45!important;
+            opacity:1!important;
+            text-shadow:none!important;
+          }
+          header .brand span::after{
+            content:" • 502-835-8658";
+            color:#17693c;
+            font-weight:900;
+          }
+          @media(max-width:760px){
+            body::after{
+              padding:18px;
+              font-size:clamp(2.8rem,17vw,5.6rem);
+              color:rgba(218,255,99,.08);
+            }
+            header .brand{
+              max-width:calc(100% - 58px);
+              padding:5px 8px 5px 6px!important;
+              border-radius:14px!important;
+              gap:7px!important;
+            }
+            header .logo-image{
+              width:52px!important;
+              height:52px!important;
+              border-radius:11px!important;
+            }
+            header .brand strong{font-size:.92rem!important}
+            header .brand span{font-size:.66rem!important}
+            header .brand span::after{content:" • Call/Text"}
+          }
+          '''
+              if "</style>" not in html:
+                  raise SystemExit("Could not find the website style block")
+              html = html.replace("</style>", css + "\n</style>", 1)
+              path.write_text(html, encoding="utf-8")
+          PY
+
+      - name: Commit the website update
+        shell: bash
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add index.html
+          git rm .github/workflows/apply-trent-branding.yml
+          git commit -m "Update website background and business-card header"
+          git push origin HEAD:main
